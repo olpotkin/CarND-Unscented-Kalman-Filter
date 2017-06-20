@@ -2,10 +2,13 @@
 #include "Eigen/Dense"
 #include <iostream>
 
+#define SMALL_VALUE 0.000001
+
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
+
 
 /**
 * Initialize Unscented Kalman filter
@@ -241,7 +244,7 @@ void UKF::Prediction(double delta_t) {
         double py_p = 0.0;
         
         // Avoid division by zero
-        if (fabs(yawd) > 0.001) {
+        if (fabs(yawd) > SMALL_VALUE) {
             px_p = p_x + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw));
             py_p = p_y + v / yawd * (cos(yaw) - cos(yaw + yawd * delta_t));
         }
