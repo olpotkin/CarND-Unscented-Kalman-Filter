@@ -10,90 +10,60 @@ using Eigen::VectorXd;
 using std::vector;
 
 
-/**
-* Initialize Unscented Kalman filter
-*/
+// Initialize Unscented Kalman filter
 UKF::UKF() {
-    // If this is false, Laser measurements will be ignored (except during init)
-    use_laser_ = true;
+  use_laser_ = true;       // If this is false, Laser measurements will be ignored (except during init)
+  use_radar_ = true;       // If this is false, Radar measurements will be ignored (except during init)
 
-    // If this is false, Radar measurements will be ignored (except during init)
-    use_radar_ = true;
+  x_ = VectorXd(5);        // Initial state vector
+  P_ = MatrixXd(5, 5);     // Initial covariance matrix
 
-    // Initial state vector
-    x_ = VectorXd(5);
+  // Process noise standard deviation longitudinal acceleration in m/s^2
+  // @todo Tune this parameter
+  std_a_ = 3;
 
-    // Initial covariance matrix
-    P_ = MatrixXd(5, 5);
+  // Process noise standard deviation yaw acceleration in rad/s^2
+  // @todo Tune this parameter
+  std_yawdd_ = 0.4;
 
-    // Process noise standard deviation longitudinal acceleration in m/s^2
-    // TODO: tune this parameter
-    std_a_ = 3;
+  std_laspx_ = 0.15;       // Laser measurement noise standard deviation position1 in m
+  std_laspy_ = 0.15;       // Laser measurement noise standard deviation position2 in m
 
-    // Process noise standard deviation yaw acceleration in rad/s^2
-    // TODO: tune this parameter
-    std_yawdd_ = 0.4;
+    
+  std_radr_   = 0.3;       // Radar measurement noise standard deviation radius in m
+  std_radphi_ = 0.03;      // Radar measurement noise standard deviation angle in rad
+  std_radrd_  = 0.3;       // Radar measurement noise standard deviation radius change in m/s
 
-    // Laser measurement noise standard deviation position1 in m
-    std_laspx_ = 0.15;
+  // @todo Complete the initialization.
+  // See ukf.h for other member properties.
+  // Hint: one or more values initialized above might be wildly off.
 
-    // Laser measurement noise standard deviation position2 in m
-    std_laspy_ = 0.15;
+  is_initialized_ = false; // Initially set to false, set to true in first call of ProcessMeasurement
+  time_us_ = 0.0;          // Time when the state is true, in us
 
-    // Radar measurement noise standard deviation radius in m
-    std_radr_ = 0.3;
+  n_x_    = 5;             // State dimension
+  n_aug_  = 7;             // Augmented state dimension
+  lambda_ = 3 - n_x_;      // Sigma point spreading parameter
 
-    // Radar measurement noise standard deviation angle in rad
-    std_radphi_ = 0.03;
+  // Predicted sigma points matrix
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
 
-    // Radar measurement noise standard deviation radius change in m/s
-    std_radrd_ = 0.3;
+  // Weights of sigma points
+  weights_ = VectorXd(2 * n_aug_ + 1);
 
-    // TODO: Complete the initialization.
-    // See ukf.h for other member properties.
-    // Hint: one or more values initialized above might be wildly off...
-
-    // Initially set to false, set to true in first call of ProcessMeasurement
-    is_initialized_ = false;
-
-    // Time when the state is true, in us
-    time_us_ = 0.0;
-
-    // State dimension
-    n_x_ = 5;
-
-    // Augmented state dimension
-    n_aug_ = 7;
-
-    // Sigma point spreading parameter
-    lambda_ = 3 - n_x_;
-
-    // Predicted sigma points matrix
-    Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
-
-    // Weights of sigma points
-    weights_ = VectorXd(2 * n_aug_ + 1);
-
-    // Current NIS for Radar
-    NIS_radar_ = 0.0;
-
-    // Current NIS for Laser
-    NIS_laser_ = 0.0;
+  NIS_radar_ = 0.0;        // Current NIS for Radar
+  NIS_laser_ = 0.0;        // Current NIS for Laser
 }
 
 
-/**
-* Destructor
-*/
+// Destructor
 UKF::~UKF() {}
 
 
-/**
- * @param {MeasurementPackage} meas_package The latest measurement data of
- * either radar or laser.
- */
+/// @param {MeasurementPackage} meas_package The latest measurement data of
+///        either radar or laser.
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-    // TODO: Complete this function! 
+    // @todo Complete this function
     // Make sure you switch between Lidar and Radar measurements.
     
     // Skip predict/update if sensor type is ignored
